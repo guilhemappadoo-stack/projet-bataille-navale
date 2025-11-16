@@ -1,99 +1,83 @@
-# main.py
-
 import random
+
 from grille import Grille
-from bateau import PorteAvion, Croiseur, Torpilleur, SousMarin, Bateau
+from bateau import PorteAvion, Croiseur, Torpilleur, SousMarin
 
-def peut_placer(grille: Grille, bateau: Bateau) -> bool:
-    """Vérifie si un bateau peut être placé sur la grille sans débordement ni chevauchement."""
-    for (l, c) in bateau.positions:
-        if not (0 <= l < grille.lignes and 0 <= c < grille.colonnes):
-            return False
-        idx = grille._index(l, c)
-        if grille.grille[idx] != grille.vide:
-            return False
-    return True
 
-def placer_bateaux_aleatoirement(grille: Grille):
+def placer_bateaux(grille):
     bateaux = []
     types = [PorteAvion, Croiseur, Torpilleur, SousMarin]
 
-    for cls in types:
+    for TypeBateau in types:
         place = False
         while not place:
-            vertical = bool(random.getrandbits(1))
-            # on essaye toutes les positions possibles
-            positions_valides = []
-            for l in range(grille.lignes):
-                for c in range(grille.colonnes):
-                    b = cls(l, c, vertical=vertical)
-                    if peut_placer(grille, b):
-                        positions_valides.append(b)
+            ligne = random.randint(0, grille.lignes - 1)
+            colonne = random.randint(0, grille.colonnes - 1)
+            vertical = random.choice([True, False])
 
-            if not positions_valides:
-                # si aucune position possible avec cette orientation, on change d’orientation
-                vertical = not vertical
-                for l in range(grille.lignes):
-                    for c in range(grille.colonnes):
-                        b = cls(l, c, vertical=vertical)
-                        if peut_placer(grille, b):
-                            positions_valides.append(b)
+            bateau = TypeBateau(ligne, colonne, vertical)
 
-            if positions_valides:
-                b = random.choice(positions_valides)
-                grille.ajoute(b)
-                bateaux.append(b)
+            if grille.ajoute(bateau):
+                bateaux.append(bateau)
                 place = True
 
     return bateaux
 
+
 def tous_coules(bateaux, grille):
-    return all(b.coule(grille) for b in bateaux)
+    for b in bateaux:
+        if not b.coule(grille):
+            return False
+    return True
+
 
 def main():
-    g = Grille(8, 10)
-    bateaux = placer_bateaux_aleatoirement(g)
-    nb_coups = 0
+    grille = Grille(8, 10)
 
-    print("Bienvenue dans la bataille navale !")
+    bateaux = placer_bateaux(grille)
 
-    while not tous_coules(bateaux, g):
-        print(g)
-        print("Entrez une ligne et une colonne pour tirer (ex: '2 3'), ou 'q' pour quitter :")
-        s = input("> ")
-        if s.lower() == "q":
-            print("Abandon du jeu.")
+    print("Bataille navale ")
+
+    while not tous_coules(bateaux, grille):
+        print(grille)
+        print()
+        texte = input("Entrez 'ligne colonne' pour tirer (ou q pour quitter) : ")
+
+        if texte.lower() == "q":
+            print("Vous avez quitté la partie.")
             return
 
         try:
-            l_str, c_str = s.split()
-            l = int(l_str)
-            c = int(c_str)
-            g.tirer(l, c, touche="x")
-            nb_coups += 1
+            ligne_str, col_str = texte.split()
+            ligne = int(ligne_str)
+            col = int(col_str)
+        except ValueError:
+            print("Entrée invalide. Exemple : 2 3\n")
+            continue
 
-            # Vérifier si on a touché un bateau et/ou coulé
-            touche = False
-            for b in bateaux:
-                if (l, c) in b.positions:
-                    touche = True
-                    print("Touché !")
-                    if b.coule(g):
-                        print("Coulé !")
-                        # on révèle le bateau avec sa marque
-                        for (ll, cc) in b.positions:
-                            idx = g._index(ll, cc)
-                            g.grille[idx] = b.marque
-                    break
+        try:
+            grille.tirer(ligne, col)
+        except IndexError:
+            print("Case en dehors de la grille.\n")
+            continue
 
-            if not touche:
-                print("Plouf dans l'eau…")
+        touche = False
+        for b in bateaux:
+            if (ligne, col) in b.positions:
+                touche = True
+                print("Touché !")
+                if b.coule(grille):
+                    print("Coulé !")
+                break
 
-        except Exception:
-            print("Entrée invalide. Format attendu : 'ligne colonne'.")
+        if not touche:
+            print("Plouf, dans l'eau...")
 
-    print(g)
-    print(f"Bravo ! Tous les bateaux sont coulés en {nb_coups} coups.")
+        print()
+
+    print(grille)
+    print("Bravo, tous les bateaux sont coulés !")
+
 
 if __name__ == "__main__":
     main()

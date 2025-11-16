@@ -1,56 +1,50 @@
-# bateau.py
+from grille import Grille  
 
-from dataclasses import dataclass
-
-@dataclass
 class Bateau:
-    ligne: int
-    colonne: int
-    longueur: int = 1
-    vertical: bool = False
-    marque: str = "⛵"
+    def __init__(self, ligne, colonne, longueur=1, vertical=False, marque="B"):
+
+        self.ligne = ligne
+        self.colonne = colonne
+        self.longueur = longueur
+
+        self.vertical = vertical
+
+        self.marque = marque
 
     @property
     def positions(self):
-        """Liste des positions (ligne, colonne) occupées par le bateau."""
-        pos = []
+
+        resultat = []
         for i in range(self.longueur):
             if self.vertical:
-                pos.append((self.ligne + i, self.colonne))
+                resultat.append((self.ligne + i, self.colonne))
             else:
-                pos.append((self.ligne, self.colonne + i))
-        return pos
+                resultat.append((self.ligne, self.colonne + i))
+        return resultat
 
-    def coule(self, grille) -> bool:
-        """
-        Renvoie True si toutes les cases du bateau sont marquées comme touchées
-        (caractère 'x') sur la grille.
-        """
-        from grille import Grille  # import local pour éviter les cycles
+    def coule(self, grille):
+
         for (l, c) in self.positions:
-            idx = grille._index(l, c)
-            if grille.grille[idx] != "x":
+            index = grille._index(l, c)
+            if grille.grille[index] != "x":
                 return False
-        return True
-
-
-# Sous-classes pour les différents types de bateaux
-
+        return True 
+    
 class PorteAvion(Bateau):
     def __init__(self, ligne, colonne, vertical=False):
-        super().__init__(ligne, colonne, longueur=4, vertical=vertical, marque="🛳")
+        super().__init__(ligne, colonne, longueur=4, vertical=vertical, marque="P")
 
 
 class Croiseur(Bateau):
     def __init__(self, ligne, colonne, vertical=False):
-        super().__init__(ligne, colonne, longueur=3, vertical=vertical, marque="⛴")
+        super().__init__(ligne, colonne, longueur=3, vertical=vertical, marque="C")
 
 
 class Torpilleur(Bateau):
     def __init__(self, ligne, colonne, vertical=False):
-        super().__init__(ligne, colonne, longueur=2, vertical=vertical, marque="🚤")
+        super().__init__(ligne, colonne, longueur=2, vertical=vertical, marque="T")
 
 
 class SousMarin(Bateau):
     def __init__(self, ligne, colonne, vertical=False):
-        super().__init__(ligne, colonne, longueur=2, vertical=vertical, marque="⚓")
+        super().__init__(ligne, colonne, longueur=2, vertical=vertical, marque="S")
